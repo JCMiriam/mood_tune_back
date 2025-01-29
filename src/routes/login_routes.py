@@ -1,5 +1,5 @@
 from flask import Blueprint, redirect, request, jsonify
-from src.functions.spotify_auth import (
+from src.functions.auth import (
     build_auth_url,
     exchange_code_for_token,
     refresh_access_token,
