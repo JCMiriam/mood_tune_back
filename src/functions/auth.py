@@ -3,15 +3,13 @@ import requests
 from flask import Blueprint, request, redirect, jsonify
 from urllib.parse import urlencode
 
-# Configurar Blueprint de autenticación
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
-# Cargar variables de entorno
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 REDIRECT_URI = os.getenv("REDIRECT_URI")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://mood-tune-front.onrender.com")
 
-# URLs de Spotify
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_URL = "https://api.spotify.com/v1/me"
@@ -19,9 +17,6 @@ SPOTIFY_API_URL = "https://api.spotify.com/v1/me"
 SCOPES = "playlist-read-private playlist-read-collaborative user-library-read user-top-read"
 
 def build_auth_url():
-    """
-    Construye la URL de autenticación de Spotify.
-    """
     query_params = {
         "client_id": CLIENT_ID,
         "response_type": "code",
@@ -31,9 +26,6 @@ def build_auth_url():
     return f"{SPOTIFY_AUTH_URL}?{urlencode(query_params)}"
 
 def exchange_code_for_token(code):
-    """
-    Intercambia un código de autorización por un token de acceso.
-    """
     token_data = {
         "grant_type": "authorization_code",
         "code": code,
@@ -45,9 +37,6 @@ def exchange_code_for_token(code):
     return response.json()
 
 def refresh_access_token(refresh_token):
-    """
-    Refresca un token de acceso usando el token de actualización.
-    """
     token_data = {
         "grant_type": "refresh_token",
         "refresh_token": refresh_token,
@@ -59,16 +48,10 @@ def refresh_access_token(refresh_token):
 
 @auth_bp.route("/login")
 def login():
-    """
-    Redirige al usuario a la autenticación de Spotify.
-    """
     return redirect(build_auth_url())
 
 @auth_bp.route("/callback")
 def callback():
-    """
-    Maneja la respuesta de autenticación de Spotify.
-    """
     code = request.args.get("code")
     if not code:
         return jsonify({"error": "Authorization code missing"}), 400
@@ -78,13 +61,11 @@ def callback():
     if "access_token" not in token_response:
         return jsonify({"error": "Failed to get access token", "details": token_response}), 400
 
-    return jsonify(token_response)
+    redirect_url = f"{FRONTEND_URL}/callback?access_token={token_response['access_token']}&refresh_token={token_response['refresh_token']}&expires_in={token_response['expires_in']}"
+    return redirect(redirect_url)
 
 @auth_bp.route("/refresh", methods=["POST"])
 def refresh():
-    """
-    Recibe un refresh token y devuelve un nuevo access token.
-    """
     data = request.json
     refresh_token = data.get("refresh_token")
 
@@ -100,9 +81,6 @@ def refresh():
 
 @auth_bp.route("/me")
 def get_user_profile():
-    """
-    Obtiene información del usuario autenticado.
-    """
     access_token = request.headers.get("Authorization")
     if not access_token:
         return jsonify({"error": "Access token required"}), 401
