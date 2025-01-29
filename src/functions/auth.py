@@ -81,11 +81,30 @@ def refresh():
 
 @auth_bp.route("/me")
 def get_user_profile():
-    access_token = request.headers.get("Authorization")
-    if not access_token:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
         return jsonify({"error": "Access token required"}), 401
+
+    access_token = auth_header.replace("Bearer ", "").strip()
 
     headers = {"Authorization": f"Bearer {access_token}"}
     response = requests.get(SPOTIFY_API_URL, headers=headers)
+
+    if response.status_code == 401:
+        refresh_token = request.headers.get("Refresh-Token")
+        if not refresh_token:
+            return jsonify({"error": "Invalid access token, refresh token required"}), 401
+
+        new_token_data = refresh_access_token(refresh_token)
+        if "access_token" in new_token_data:
+            new_access_token = new_token_data["access_token"]
+
+            headers["Authorization"] = f"Bearer {new_access_token}"
+            retry_response = requests.get(SPOTIFY_API_URL, headers=headers)
+
+            if retry_response.status_code == 200:
+                return jsonify(retry_response.json())
+
+        return jsonify({"error": "Invalid access token, refresh failed"}), 401
 
     return jsonify(response.json())
