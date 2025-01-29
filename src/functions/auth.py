@@ -108,3 +108,47 @@ def get_user_profile():
         return jsonify({"error": "Invalid access token, refresh failed"}), 401
 
     return jsonify(response.json())
+
+@auth_bp.route("/playlists")
+def get_user_playlists():
+    access_token = request.headers.get("Authorization")
+    if not access_token:
+        return jsonify({"error": "Access token required"}), 401
+
+    headers = {"Authorization": access_token}
+    response = requests.get("https://api.spotify.com/v1/me/playlists", headers=headers)
+
+    return jsonify(response.json())
+
+@auth_bp.route("/top-tracks")
+def get_top_tracks():
+    access_token = request.headers.get("Authorization")
+    if not access_token:
+        return jsonify({"error": "Access token required"}), 401
+
+    headers = {"Authorization": access_token}
+    response = requests.get("https://api.spotify.com/v1/me/top/tracks?limit=50", headers=headers)
+
+    return jsonify(response.json())
+
+@auth_bp.route("/top-artists")
+def get_top_artists():
+    access_token = request.headers.get("Authorization")
+    if not access_token:
+        return jsonify({"error": "Access token required"}), 401
+
+    headers = {"Authorization": access_token}
+    response = requests.get("https://api.spotify.com/v1/me/top/artists?limit=50", headers=headers)
+
+    return jsonify(response.json())
+
+@auth_bp.route("/favorite-tracks")
+def get_favorite_tracks():
+    access_token = request.headers.get("Authorization")
+    if not access_token:
+        return jsonify({"error": "Access token required"}), 401
+
+    headers = {"Authorization": access_token}
+    response = requests.get("https://api.spotify.com/v1/me/tracks?limit=50", headers=headers)
+
+    return jsonify(response.json())
