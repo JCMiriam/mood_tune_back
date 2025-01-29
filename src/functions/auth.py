@@ -127,7 +127,7 @@ def get_top_tracks():
         return jsonify({"error": "Access token required"}), 401
 
     headers = {"Authorization": access_token}
-    response = requests.get("https://api.spotify.com/v1/me/top/tracks?limit=50", headers=headers)
+    response = requests.get("https://api.spotify.com/v1/me/top/tracks?limit=10", headers=headers)
 
     return jsonify(response.json())
 
@@ -138,7 +138,7 @@ def get_top_artists():
         return jsonify({"error": "Access token required"}), 401
 
     headers = {"Authorization": access_token}
-    response = requests.get("https://api.spotify.com/v1/me/top/artists?limit=50", headers=headers)
+    response = requests.get("https://api.spotify.com/v1/me/top/artists?limit=10", headers=headers)
 
     return jsonify(response.json())
 
@@ -149,6 +149,6 @@ def get_favorite_tracks():
         return jsonify({"error": "Access token required"}), 401
 
     headers = {"Authorization": access_token}
-    response = requests.get("https://api.spotify.com/v1/me/tracks?limit=50", headers=headers)
+    response = requests.get("https://api.spotify.com/v1/me/tracks?limit=10", headers=headers)
 
     return jsonify(response.json())
