@@ -131,14 +131,14 @@ def get_top_tracks():
 
     return jsonify(response.json())
 
-@auth_bp.route("/top-artists")
-def get_top_artists():
+@auth_bp.route("/followed-artists")
+def get_followed_artists():
     access_token = request.headers.get("Authorization")
     if not access_token:
         return jsonify({"error": "Access token required"}), 401
 
     headers = {"Authorization": access_token}
-    response = requests.get("https://api.spotify.com/v1/me/top/artists?limit=10", headers=headers)
+    response = requests.get("https://api.spotify.com/v1/me/following?type=artist&limit=10", headers=headers)
 
     return jsonify(response.json())
 
