@@ -63,15 +63,9 @@ def callback():
 
     if "access_token" not in token_response:
         return jsonify({"error": "Failed to get access token", "details": token_response}), 400
+    
+    redirect_url = f"{FRONTEND_URL}/callback?access_token={token_response['access_token']}&refresh_token={token_response['refresh_token']}&expires_in={token_response['expires_in']}"
 
-    df_dataset = load_dataset()
-
-    redirect_url = (
-        f"{FRONTEND_URL}/callback?"
-        f"access_token={token_response['access_token']}&"
-        f"refresh_token={token_response['refresh_token']}&"
-        f"expires_in={token_response['expires_in']}"
-    )
     return redirect(redirect_url)
 
 @auth_bp.route("/refresh", methods=["POST"])
@@ -171,7 +165,7 @@ def get_favorite_tracks():
         return jsonify({"error": "Failed to fetch favorite tracks"}), response.status_code
 
     user_favorites = response.json().get("items", [])
-    user_tracks = [track["track"] for track in user_favorites]  # Extraer solo los datos de las canciones
+    user_tracks = [track["track"] for track in user_favorites]
 
     matching_tracks = check_songs_in_dataset(user_tracks)
 
