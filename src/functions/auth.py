@@ -17,7 +17,7 @@ SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_URL = "https://api.spotify.com/v1/me"
 
-SCOPES = "playlist-read-private playlist-read-collaborative user-library-read user-top-read"
+SCOPES = "playlist-read-private playlist-read-collaborative user-library-read user-top-read user-follow-read"
 
 def build_auth_url():
     query_params = {
