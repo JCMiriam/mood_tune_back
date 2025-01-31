@@ -2,6 +2,9 @@ import os
 import requests
 from flask import Blueprint, request, redirect, jsonify
 from urllib.parse import urlencode
+from src.functions.dataset_loader import load_dataset
+from src.functions.dataset_loader import check_songs_in_dataset
+
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -61,7 +64,14 @@ def callback():
     if "access_token" not in token_response:
         return jsonify({"error": "Failed to get access token", "details": token_response}), 400
 
-    redirect_url = f"{FRONTEND_URL}/callback?access_token={token_response['access_token']}&refresh_token={token_response['refresh_token']}&expires_in={token_response['expires_in']}"
+    df_dataset = load_dataset()
+
+    redirect_url = (
+        f"{FRONTEND_URL}/callback?"
+        f"access_token={token_response['access_token']}&"
+        f"refresh_token={token_response['refresh_token']}&"
+        f"expires_in={token_response['expires_in']}"
+    )
     return redirect(redirect_url)
 
 @auth_bp.route("/refresh", methods=["POST"])
@@ -129,7 +139,13 @@ def get_top_tracks():
     headers = {"Authorization": access_token}
     response = requests.get("https://api.spotify.com/v1/me/top/tracks?limit=10", headers=headers)
 
-    return jsonify(response.json())
+    if response.status_code != 200:
+        return jsonify({"error": "Failed to fetch top tracks"}), response.status_code
+
+    user_tracks = response.json().get("items", [])
+    matching_tracks = check_songs_in_dataset(user_tracks)
+
+    return jsonify({"tracks_in_dataset": matching_tracks})
 
 @auth_bp.route("/followed-artists")
 def get_followed_artists():
@@ -151,4 +167,13 @@ def get_favorite_tracks():
     headers = {"Authorization": access_token}
     response = requests.get("https://api.spotify.com/v1/me/tracks?limit=10", headers=headers)
 
-    return jsonify(response.json())
+    if response.status_code != 200:
+        return jsonify({"error": "Failed to fetch favorite tracks"}), response.status_code
+
+    user_favorites = response.json().get("items", [])
+    user_tracks = [track["track"] for track in user_favorites]  # Extraer solo los datos de las canciones
+
+    matching_tracks = check_songs_in_dataset(user_tracks)
+
+    return jsonify({"tracks_in_dataset": matching_tracks})
+
