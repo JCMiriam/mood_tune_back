@@ -17,7 +17,7 @@ SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_URL = "https://api.spotify.com/v1/me"
 
-SCOPES = "playlist-read-private playlist-read-collaborative user-library-read user-top-read user-follow-read"
+SCOPES = "playlist-read-private playlist-read-collaborative user-library-read user-follow-read user-top-read"
 
 def build_auth_url():
     query_params = {
@@ -148,7 +148,7 @@ def get_followed_artists():
         return jsonify({"error": "Access token required"}), 401
 
     headers = {"Authorization": access_token}
-    response = requests.get("https://api.spotify.com/v1/me/following?type=artist&limit=10", headers=headers)
+    response = requests.get("https://api.spotify.com/v1/me/following?type=artist", headers=headers)
 
     return jsonify(response.json())
 
