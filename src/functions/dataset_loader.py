@@ -8,16 +8,13 @@ DATASET_URL = "https://github.com/JCMiriam/mood_tune_back/raw/refs/heads/main/sr
 df_dataset = None
 
 def load_dataset():
-    global df_dataset
-    if df_dataset is None:
-        response = requests.get(DATASET_URL)
-        if response.status_code == 200:
-            csv_data = StringIO(response.text)
-            # Solo cargamos columnas necesarias
-            df_dataset = pd.read_csv(csv_data, usecols=["song_name", "artist_name", "spotify_url"], dtype=str)
-        else:
-            raise Exception("Error al cargar el dataset")
-    return df_dataset
+    response = requests.get(DATASET_URL)
+    if response.status_code == 200:
+        csv_data = StringIO(response.text)
+        df_dataset = pd.read_csv(csv_data, usecols=["song_name", "artist_name", "track_uri", "spotify_url"], dtype=str)
+        return df_dataset
+    else:
+        raise Exception("Error on load dataset")
 
 def normalize_string(text):
     if not isinstance(text, str):
@@ -28,15 +25,10 @@ def normalize_string(text):
     return text
 
 def check_songs_in_dataset(user_songs):
-    global df_dataset
-    if df_dataset is None:
-        df_dataset = load_dataset()
-
-    dataset_songs = df_dataset.copy()
-    dataset_songs = dataset_songs.applymap(lambda x: x.lower().strip() if isinstance(x, str) else x)
-
+    df_dataset = load_dataset()
+    dataset_songs = df_dataset.applymap(lambda x: x.lower().strip() if isinstance(x, str) else x)
+    
     matching_songs = []
-
     for song in user_songs:
         song_name = song.get("name", "").lower().strip()
         artist_name = song.get("artists", [{}])[0].get("name", "").lower().strip()
@@ -52,6 +44,7 @@ def check_songs_in_dataset(user_songs):
         if not match.empty:
             matching_songs.append(song)
 
+    del df_dataset
     return matching_songs
 
 def check_artists_in_dataset(user_artists):
