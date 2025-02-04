@@ -11,8 +11,7 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 REDIRECT_URI = os.getenv("REDIRECT_URI")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://mood-tune-front.onrender.com")
-
+FRONTEND_URL = os.getenv("FRONTEND_URL")
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_URL = "https://api.spotify.com/v1/me"
@@ -131,7 +130,7 @@ def get_top_tracks():
         return jsonify({"error": "Access token required"}), 401
 
     headers = {"Authorization": access_token}
-    response = requests.get("https://api.spotify.com/v1/me/top/tracks?limit=10", headers=headers)
+    response = requests.get("https://api.spotify.com/v1/me/top/tracks?limit=50", headers=headers)
 
     if response.status_code != 200:
         return jsonify({"error": "Failed to fetch top tracks"}), response.status_code
@@ -159,7 +158,7 @@ def get_favorite_tracks():
         return jsonify({"error": "Access token required"}), 401
 
     headers = {"Authorization": access_token}
-    response = requests.get("https://api.spotify.com/v1/me/tracks?limit=10", headers=headers)
+    response = requests.get("https://api.spotify.com/v1/me/tracks?limit=50", headers=headers)
 
     if response.status_code != 200:
         return jsonify({"error": "Failed to fetch favorite tracks"}), response.status_code
