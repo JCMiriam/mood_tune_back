@@ -50,27 +50,14 @@ pip install -r requirements.txt
 
 
 ### **4. Configure Environment Variables**
-Create a .env file in the root directory and add the following:
+Create a .env file in the root directory and add the corresponding keys. After that, execute the following command.
 
-```bash
-FLASK_APP=run.py
-FLASK_ENV=development
-DATABASE_URL=postgresql://<username>:<password>@<host>:<port>/<database>
-DEBUG=True
 ```
-
-Replace <username>, <password>, <host>, <port>, and <database> with your PostgreSQL credentials.
-
-
-### **5. Initialize the Database**
-Run the following command to create the necessary tables in your database:
-
-```bash
-python init_db.py
+set FLASK_APP=run.py
 ```
 
 
-### **6. Run the Application**
+### **5. Run the Application**
 Start the Flask development server:
 
 ```bash
@@ -80,15 +67,6 @@ python run.py
 The server will be available at http://127.0.0.1:5000.
 
 ---
-
-
-### **Endpoints Overview**
-
-| Endpoint       | Method | Description                  |
-|----------------|--------|------------------------------|
-| `/users/`      | GET    | Fetch user-related information. |
-| `/users/save`  | POST   | Save user data and tracks.   |
-
 
 ### **License**
 This project is licensed under the MIT License. See the LICENSE file for details.
