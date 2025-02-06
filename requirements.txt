@@ -2,6 +2,7 @@ Flask==3.1.0
 Flask-Cors==5.0.0
 Flask-Compress==1.13
 Flask-SQLAlchemy==3.1.1
+flask_session
 requests==2.32.3
 python-dotenv==1.0.1
 psycopg2-binary==2.9.10
