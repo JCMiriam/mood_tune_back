@@ -61,7 +61,8 @@ def check_songs_in_dataset(user_songs, threshold=85):
                         "album": song["album"]["name"],
                         "duration_ms": song["duration_ms"],
                         "popularity": song["popularity"],
-                        "spotify_url": song["external_urls"]["spotify"]
+                        "spotify_url": song["external_urls"]["spotify"],
+                        "picture": song["album"]["images"][0]["url"]
                     },
                     "dataset_data": dataset_data
                 })
