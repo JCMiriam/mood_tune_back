@@ -29,17 +29,25 @@ def search_songs(user_query, top_n=5):
     """
     start_time = time.time()
     
+    # 📌 Traducir la consulta a inglés si es necesario
     translated_query = translate_to_english(user_query)
+
+    # 📌 Convertir la consulta en embedding
     query_embedding = model.encode(translated_query, convert_to_tensor=True).cpu().numpy().astype('float32')
 
+    # 📌 Buscar en FAISS
     distances, indices = index.search(np.array([query_embedding]), top_n)
-    
-    top_songs = df.iloc[indices[0]].copy()
-    top_songs['similarity'] = 1 - distances[0]  
 
-    # 📌 Traducir letras
-    top_songs['translated_lyrics'] = top_songs['processed_lyrics'].apply(lambda x: translate_to_spanish(x[:500]) if isinstance(x, str) else "Traducción no disponible")
+    # 📌 Obtener las canciones más similares
+    top_songs = df.iloc[indices[0]].copy()
+    top_songs['similarity'] = 1 - distances[0]  # Convertir distancia en similitud
+
+    # 📌 Traducir fragmento de la letra para UI
+    top_songs['translated_lyrics'] = top_songs['processed_lyrics'].apply(
+        lambda x: translate_to_spanish(x[:500]) if isinstance(x, str) else "Traducción no disponible"
+    )
 
     print(f"⏱ Búsqueda completada en {time.time() - start_time:.4f} segundos.")
 
-    return top_songs[['artist_name', 'song_name', 'spotify_url', 'processed_lyrics', 'translated_lyrics', 'similarity']]
+    # 📌 Retornar datos estructurados para la UI
+    return top_songs[['artist_name', 'song_name', 'spotify_url', 'processed_lyrics', 'translated_lyrics', 'similarity']].to_dict(orient="records")
