@@ -1,2 +1,4 @@
 .env
+src/models/*.pkl
+venv/
 flask_session/
