@@ -11,14 +11,25 @@ model = model_data["model"]
 
 def translate_to_english(text):
     """Traduce la frase del usuario a inglés si no está en inglés."""
-    detected_lang = detect(text)
-    if detected_lang != 'en':
-        return GoogleTranslator(source='auto', target='en').translate(text)
-    return text
+    try:
+        if text and isinstance(text, str) and text.strip():
+            detected_lang = detect(text)
+            if detected_lang != 'en':
+                return GoogleTranslator(source='auto', target='en').translate(text)
+        return text
+    except Exception as e:
+        print(f"❌ Error detectando idioma: {e}")
+        return text  # Si hay error, usa el texto original
 
 def translate_to_spanish(text):
-    """Traduce una letra de inglés a español."""
-    return GoogleTranslator(source='en', target='es').translate(text) if isinstance(text, str) else "Traducción no disponible"
+    """Traduce una letra de inglés a español (máx 499 caracteres)."""
+    try:
+        if text and isinstance(text, str) and text.strip():  # Asegura que no sea vacío o None
+            return GoogleTranslator(source='en', target='es').translate(text[:499])
+        return "Traducción no disponible"
+    except Exception as e:
+        print(f"❌ Error traduciendo letra: {e}")
+        return "Traducción no disponible"
 
 def search_songs(user_query, top_n=5):
     """
@@ -38,14 +49,46 @@ def search_songs(user_query, top_n=5):
     # 📌 Buscar en FAISS
     distances, indices = index.search(np.array([query_embedding]), top_n)
 
+    # 📌 Verificar si se obtuvieron resultados válidos
+    if not indices.any():
+        print("❌ No se encontraron resultados, devolviendo valor por defecto.")
+        return [{
+            "artist_name": "Error",
+            "song_name": "No se encontraron canciones",
+            "spotify_url": "",
+            "processed_lyrics": "No hay letra disponible",
+            "translated_lyrics": "Traducción no disponible",
+            "similarity": 0
+        }]
+
     # 📌 Obtener las canciones más similares
     top_songs = df.iloc[indices[0]].copy()
     top_songs['similarity'] = 1 - distances[0]  # Convertir distancia en similitud
 
-    # 📌 Traducir fragmento de la letra para UI
-    top_songs['translated_lyrics'] = top_songs['processed_lyrics'].apply(
-        lambda x: translate_to_spanish(x[:500]) if isinstance(x, str) else "Traducción no disponible"
-    )
+    # 📌 Filtrar canciones inválidas
+    top_songs = top_songs[top_songs['song_name'].notna()]
+    if top_songs.empty:
+        print("❌ La búsqueda no devolvió canciones válidas.")
+        return [{
+            "artist_name": "Error",
+            "song_name": "No se encontraron canciones",
+            "spotify_url": "",
+            "processed_lyrics": "No hay letra disponible",
+            "translated_lyrics": "Traducción no disponible",
+            "similarity": 0
+        }]
+
+    # 📌 Asegurar que `processed_lyrics` existe antes de traducir y cortar a 499 caracteres
+    if "processed_lyrics" in top_songs.columns:
+        top_songs['processed_lyrics'] = top_songs['processed_lyrics'].apply(
+            lambda x: (x[:499] + "...") if isinstance(x, str) and x.strip() else "Letra no disponible"
+        )
+        top_songs['translated_lyrics'] = top_songs['processed_lyrics'].apply(
+            lambda x: translate_to_spanish(x) if x != "Letra no disponible" else "Traducción no disponible"
+        )
+    else:
+        top_songs['processed_lyrics'] = "Letra no disponible"
+        top_songs['translated_lyrics'] = "Traducción no disponible"
 
     print(f"⏱ Búsqueda completada en {time.time() - start_time:.4f} segundos.")
 
