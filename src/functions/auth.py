@@ -16,7 +16,8 @@ SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_URL = "https://api.spotify.com/v1/me"
 
-SCOPES = "playlist-read-private playlist-read-collaborative user-library-read user-follow-read user-top-read"
+SCOPES = "playlist-modify-public playlist-modify-private playlist-read-private playlist-read-collaborative user-library-read user-follow-read user-top-read"
+
 
 def build_auth_url():
     query_params = {
@@ -170,3 +171,50 @@ def get_favorite_tracks():
 
     return jsonify({"tracks_in_dataset": matching_tracks})
 
+@auth_bp.route("/create-playlist", methods=["POST"])
+def create_playlist():
+    access_token = request.headers.get("Authorization")
+    if not access_token:
+        return jsonify({"error": "Access token required"}), 401
+
+    data = request.json
+    playlist_name = data.get("playlist_name", "Mi Mood List")
+    track_uris = data.get("track_uris", [])
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+
+    # 1️⃣ Obtener el ID del usuario actual
+    user_response = requests.get("https://api.spotify.com/v1/me", headers=headers)
+    if user_response.status_code != 200:
+        return jsonify({"error": "Failed to fetch user profile"}), user_response.status_code
+
+    user_id = user_response.json()["id"]
+
+    # 2️⃣ Crear la playlist en Spotify
+    playlist_data = {
+        "name": playlist_name,
+        "description": "Playlist generada con MoodTune 🎵",
+        "public": False,
+    }
+
+    create_playlist_url = f"https://api.spotify.com/v1/users/{user_id}/playlists"
+    playlist_response = requests.post(create_playlist_url, headers=headers, json=playlist_data)
+
+    if playlist_response.status_code != 201:
+        return jsonify({"error": "Failed to create playlist", "details": playlist_response.json()}), playlist_response.status_code
+
+    playlist_id = playlist_response.json()["id"]
+    playlist_url = playlist_response.json()["external_urls"]["spotify"]
+
+    # 3️⃣ Agregar canciones a la playlist
+    add_tracks_url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+    add_tracks_data = {"uris": track_uris}
+    add_tracks_response = requests.post(add_tracks_url, headers=headers, json=add_tracks_data)
+
+    if add_tracks_response.status_code != 201:
+        return jsonify({"error": "Failed to add tracks", "details": add_tracks_response.json()}), add_tracks_response.status_code
+
+    return jsonify({"message": "Playlist created successfully!", "playlist_url": playlist_url})
