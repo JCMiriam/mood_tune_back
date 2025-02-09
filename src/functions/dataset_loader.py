@@ -2,7 +2,7 @@ import pandas as pd
 import re
 from rapidfuzz import fuzz, process
 
-DATASET_PATH = r"C:\Users\solan\mood_tune_back\src\data\final_df.csv"
+DATASET_PATH = "C:/Users/USUARIO/Desktop/Projects/mood_tune_back/src/data/final_df.csv"
 df_dataset = None
 
 def load_dataset():
@@ -13,7 +13,20 @@ def load_dataset():
             usecols=["song_name", "artist_name", "recording_id", "danceable", "male", "timbre_bright", 
                      "tonal", "instrumental", "mood_acoustic", "mood_aggressive", "mood_electronic", 
                      "mood_happy", "mood_party", "mood_relaxed", "mood_sad", "combined_genres"],
-            dtype=str
+            dtype={
+                "danceable": float,
+                "male": float,
+                "timbre_bright": float,
+                "tonal": float,
+                "instrumental": float,
+                "mood_acoustic": float,
+                "mood_aggressive": float,
+                "mood_electronic": float,
+                "mood_happy": float,
+                "mood_party": float,
+                "mood_relaxed": float,
+                "mood_sad": float
+            }
         )
         df_dataset = df_dataset.dropna(subset=["song_name", "artist_name"])
         df_dataset["song_name"] = df_dataset["song_name"].apply(normalize_string)
