@@ -14,6 +14,6 @@ def get_songs_by_mood():
         return jsonify({"error": "Falta el parámetro 'moodText'"}), 400
 
     mood_text = data["moodText"]
-    songs = search_songs(mood_text, top_n=5)
+    songs = search_songs(mood_text, top_n=15)
 
     return jsonify(songs)
