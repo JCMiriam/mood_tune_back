@@ -2,7 +2,7 @@ import pandas as pd
 import re
 from rapidfuzz import fuzz, process
 
-DATASET_PATH = r"C:\Users\solan\mood_tune_back\src\data\final_df.csv"
+DATASET_PATH = r"C:\Users\solan\Downloads\mood_tune_back\src\data\final_df.csv"
 df_dataset = None
 
 def load_dataset():
