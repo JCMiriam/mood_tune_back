@@ -15,7 +15,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object('src.config')
 
-    # Configuración de la sesión
+    # 🔹 Configuración de la sesión
     app.config['SESSION_TYPE'] = 'filesystem'
     app.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), "flask_session")
     app.config['SESSION_PERMANENT'] = False
@@ -24,23 +24,22 @@ def create_app():
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = "Lax"
     app.config['SESSION_COOKIE_SECURE'] = False
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'supersecretkey')
+    app.config['SECRET_KEY'] = 'supersecretkey'
 
-    # Inicializar sesiones
     Session(app)
 
     # Configuración de CORS
-    CORS(app, supports_credentials=True, origins=[os.getenv('FRONTEND_URL', 'http://localhost:5173')])
+    CORS(app, supports_credentials=True, origins=["http://localhost:5173"])
 
     # Inicializar la base de datos
     db.init_app(app)
     Compress(app)
 
-    # Registrar Blueprints (rutas)
+    # Registrar Blueprints
     from src.routes import user_routes
     from src.functions.auth import auth_bp
     from src.routes.filtered_routes import filtered_bp
-    from src.routes.song_routes import bp as song_routes_bp
+    from src.routes.song_routes import bp as song_routes_bp 
 
     app.register_blueprint(user_routes.bp, url_prefix="/users")
     app.register_blueprint(auth_bp, url_prefix="/auth")
