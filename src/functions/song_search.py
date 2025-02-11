@@ -31,7 +31,7 @@ def translate_to_spanish(text):
         print(f"❌ Error traduciendo letra: {e}")
         return "Traducción no disponible"
 
-def search_songs(user_query, top_n=5):
+def search_songs(user_query, top_n=15):
     """
     Busca canciones en base a una frase del usuario usando FAISS.
     
