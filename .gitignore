@@ -2,4 +2,4 @@
 src/models/*.pkl
 venv/
 flask_session/
-src/models/*.index
+.index
