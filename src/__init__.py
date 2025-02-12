@@ -4,10 +4,14 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_compress import Compress
 from flask_cors import CORS
 from flask_session import Session
+from dotenv import load_dotenv
 
 db = SQLAlchemy()
 
 def create_app():
+    # Cargar variables de entorno desde .env
+    load_dotenv()
+
     app = Flask(__name__)
     app.config.from_object('src.config')
 
