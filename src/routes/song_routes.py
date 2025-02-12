@@ -1,13 +1,19 @@
 from flask import Blueprint, jsonify, request
 from src.functions.song_search import search_songs
+from src.models.model_loader import model_data  # Se obtiene el DataFrame, índice y modelo
 import pandas as pd
-import os
 
 bp = Blueprint("song_routes", __name__, url_prefix="/songs")
 
-# Cargar dataset desde el CSV
-DATASET_PATH = os.path.join(os.getcwd(), "src/data/final_df.csv")
-df = pd.read_csv(DATASET_PATH)
+# Utilizamos el DataFrame cargado en model_data en lugar de leer el CSV de nuevo.
+df = model_data["df"]
+
+# Función para filtrar el dataset según los géneros seleccionados
+def filtrar_por_genero(df, generos):
+    if not generos:  # Si `generos` está vacío, devolvemos todo el dataset
+        return df
+    df_filtrado = df[df["combined_genres"].apply(lambda x: any(gen in str(x).lower() for gen in generos))]
+    return df_filtrado if not df_filtrado.empty else df  # Si el filtrado queda vacío, devolvemos el dataset original
 
 # Función para calcular la tasa de diferencia entre las canciones de referencia
 def calcular_tasa_diferencia_referencias(referencias, columnas_parametros):
@@ -71,43 +77,38 @@ def calcular_tasa_diferencia_referencias(referencias, columnas_parametros):
 def get_songs_by_mood():
     """
     Endpoint para buscar canciones basadas en el estado de ánimo del usuario.
-    Recibe un JSON con la clave `moodText`.
+    Recibe un JSON con la clave 'moodText'.
     """
     data = request.get_json()
     if not data or "moodText" not in data:
         return jsonify({"error": "Falta el parámetro 'moodText'"}), 400
 
     mood_text = data["moodText"]
-    songs = search_songs(mood_text, top_n=15)
-
+    songs = search_songs(mood_text, top_n=10)
     return jsonify(songs)
 
-# Endpoint para obtener canción más cercana a las demás
+# Endpoint para obtener canción más cercana a las demás (ranking central)
 @bp.route("/rank-central-songs", methods=["POST"])
 def rank_central_songs():
     try:
         data = request.get_json()
-
         if not data or "references" not in data or "importances" not in data:
             return jsonify({"error": "Invalid input format"}), 400
 
         referencias = data["references"]
         importancias = data["importances"]
-
         if not referencias or not isinstance(importancias, dict):
             return jsonify({"error": "Invalid references or importances format"}), 400
 
         # Obtener columnas de parámetros a partir del diccionario de importancias
         columnas_parametros = list(importancias.keys())
-
         # Calcular la centralidad de las canciones
         _, canciones_ordenadas = calcular_tasa_diferencia_referencias(referencias, columnas_parametros)
-
         return jsonify({"ordered_tracks": canciones_ordenadas}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+
 # Función para calcular la disonancia ponderada
 def calcular_disonancia(row, referencia, importancias):
     disonancia_total = 0
@@ -126,17 +127,11 @@ def obtener_ranking(df, referencia, importancias, nombre_columna_ranking):
 
 # Función para obtener el top 10 de canciones menos disonantes basado en las preferencias del usuario
 def obtener_top_10_por_preferencias(df, preferencias_usuario, importancias):
-    # Convertir las preferencias en un diccionario de referencia
-    referencia = {k: v / 100 for k, v in preferencias_usuario.items()}  # Normalizamos los valores a 0-1
-
-    # Obtener ranking de disonancia
+    # Convertir las preferencias en un diccionario de referencia (normalizando a 0-1)
+    referencia = {k: v / 100 for k, v in preferencias_usuario.items()}
     df_ranking = obtener_ranking(df.copy(), referencia, importancias, "disonancia_usuario")
-
-    # Seleccionar el top 10
     top_10 = df_ranking.head(10)
-
-    # Formatear la respuesta en JSON con las columnas necesarias
-    top_10_json = top_10[[
+    top_10_json = top_10[[ 
         "artist_name", "song_name", "recording_id", "danceable", "instrumental", "male", "mood_acoustic",
         "mood_aggressive", "mood_electronic", "mood_happy", "mood_party", "mood_relaxed", "mood_sad",
         "timbre_bright", "tonal", "spotify_url", "album_name", "duration_ms", "combined_genres"
@@ -144,7 +139,6 @@ def obtener_top_10_por_preferencias(df, preferencias_usuario, importancias):
         "album_name": "album",
         "artist_name": "artist"
     }).to_dict(orient="records")
-
     return top_10_json
 
 # Endpoint para obtener recomendaciones de canciones según las preferencias del usuario
@@ -152,7 +146,6 @@ def obtener_top_10_por_preferencias(df, preferencias_usuario, importancias):
 def get_song_recommendations():
     try:
         data = request.get_json()
-        
         if not data or "preferences" not in data or "importances" not in data:
             return jsonify({"error": "Invalid input format. Expected 'preferences' and 'importances'."}), 400
 
@@ -162,9 +155,7 @@ def get_song_recommendations():
         if not isinstance(preferencias_usuario, dict) or not isinstance(importancias, dict):
             return jsonify({"error": "Invalid format. 'preferences' and 'importances' should be dictionaries."}), 400
 
-        # Obtener las 10 canciones recomendadas
         top_10_canciones_json = obtener_top_10_por_preferencias(df, preferencias_usuario, importancias)
-
         return jsonify({"recommended_tracks": top_10_canciones_json}), 200
 
     except Exception as e:
